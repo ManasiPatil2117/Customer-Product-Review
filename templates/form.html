@@ -1,0 +1,26 @@
+<html>
+
+<head>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+    }
+  </style>
+  <title>{{ title }} Sentiment Analysis</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body>
+  <h1>Welcome To Sentiment Analyzer</h1>
+  <form method="POST">
+    <textarea name="text1" placeholder="Add link of Product with expanded reviews..." rows="2" cols="109"></textarea><br /><br />
+
+    <input class="example_a" type="submit" />
+    {% block section %}
+    {% endblock %}
+
+</body>
+
+</html>
