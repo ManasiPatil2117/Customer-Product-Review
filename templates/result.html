@@ -11,42 +11,47 @@
   type="text/javascript"
   src="https://www.gstatic.com/charts/loader.js"
 ></script>
-<h1>Customer Sentiment Analyzer...</h1>
-<div id="simple_chart"></div>
-{% if final %}
+<center>
+  <h1>Customer Sentiment Analyzer</h1>
 
-<div>
-  <h2>The Customer Sentiment is {{ final * 100 }}% positive !</h2>
+  <div id="simple_chart"></div>
+  {% if final %}
 
-  <br />
-  <p id="cust_review"><b>Here's an example...</b> <br /><br />'{{ text1 }}'</p>
-  <br /><br />
+  <div>
+    <h2 class="prj-heading">The Customer Sentiment is {{ final * 100 }}% positive !</h2>
 
-  <h2>Score table</h2>
+    <br />
+    <p id="cust_review">
+      <b>Here's an example...</b> <br /><br />'{{ text1 }}'
+    </p>
+    <br /><br />
 
-  <table style="width: 100%">
-    <tr>
-      <th>SENTIMENT METRIC</th>
-      <th>SCORE</th>
-    </tr>
-    <tr>
-      <td>Positive</td>
-      <td>{{ text2 }}</td>
-    </tr>
-    <tr>
-      <td>Neutral</td>
-      <td>{{ text3 }}</td>
-    </tr>
-    <tr>
-      <td>Negative</td>
-      <td>{{ text5 }}</td>
-    </tr>
-    <tr>
-      <td>Compound</td>
-      <td>{{ text4 }}</td>
-    </tr>
-  </table>
-</div>
+    <h2>Score table</h2>
+
+    <table style="width: 100%">
+      <tr>
+        <th>SENTIMENT METRIC</th>
+        <th>SCORE</th>
+      </tr>
+      <tr>
+        <td>Positive</td>
+        <td>{{ text2 }}</td>
+      </tr>
+      <tr>
+        <td>Neutral</td>
+        <td>{{ text3 }}</td>
+      </tr>
+      <tr>
+        <td>Negative</td>
+        <td>{{ text5 }}</td>
+      </tr>
+      <tr>
+        <td>Compound</td>
+        <td>{{ text4 }}</td>
+      </tr>
+    </table>
+  </div>
+</center>
 {% endif %}
 
 <script type="text/javascript">
