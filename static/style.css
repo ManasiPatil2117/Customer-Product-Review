@@ -33,8 +33,11 @@ h1 {
 }
 
 .example_a {
+    
+
+    align-items: center;
     border: none;
-    background: #404040;
+    background: #969494;
     font-weight: 100;
     padding: 20px;
     text-transform: uppercase;
