@@ -1,43 +1,14 @@
 from flask import Flask, request, render_template
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import nltk
-from string import punctuation
-import re
-from nltk.corpus import stopwords
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
-import numpy as np
-# for data cleaning
+from bs4 import BeautifulSoup
 import string
 import re
-# for removing accented and special chracters
 import unicodedata
-# for stopwords Removal
-from nltk.corpus import stopwords
-
-from nltk.tokenize import word_tokenize
-# for calculating Polarity and Subjectivity
 from textblob import TextBlob
 import matplotlib.pyplot as plt
 import seaborn as sns
-# function for making ngrams
-from nltk.util import ngrams
-# load in all the modules we're going to need
-import nltk
-import collections
-# for Wordscloud
-# from wordcloud import WordCloud
-from sklearn.feature_extraction.text import CountVectorizer
 import string
-
-
-
-nltk.download('stopwords')
-
-set(stopwords.words('english'))
 
 app = Flask(__name__)
 
@@ -49,7 +20,7 @@ def my_form():
 
 @app.route('/', methods=['POST'])
 def my_form_post():
-    stop_words = stopwords.words('english')
+    
 
     # Get link
     reviews_url = request.form['productLink'].strip()
@@ -89,7 +60,10 @@ def my_form_post():
                 
                 response = requests.get(url, headers=headers)
                 
-            
+                if response.status_code != 200:
+                    error = f"Invalid URL - Status Code: {response.status_code}"
+                    return render_template('error.html', error=error)
+                
                 soup = BeautifulSoup(response.text, 'lxml')
                 soups.append(soup)
                 
