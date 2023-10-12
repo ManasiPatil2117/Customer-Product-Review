@@ -1,20 +1,21 @@
+
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+from datetime import datetime
 from flask import Flask, request, render_template
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import nltk
-from string import punctuation
 import re
 from nltk.corpus import stopwords
 import requests
 import json
-from bs4 import BeautifulSoup
 
-nltk.download('stopwords')
-
-set(stopwords.words('english'))
-
-app = Flask(__name__)
+headers = {
+    'authority': 'www.amazon.com',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'accept-language': 'en-US,en;q=0.9,bn;q=0.8',
+    'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'
+}
 
 
 @app.route('/')
@@ -24,76 +25,104 @@ def my_form():
 
 @app.route('/', methods=['POST'])
 def my_form_post():
-    stop_words = stopwords.words('english')
+    reviews_url = 'https://www.amazon.com/Legendary-Whitetails-Journeyman-Jacket-Tarmac/product-reviews/B013KW38RQ/'
+    #reviews_url = input("ENTER URL: ")
+    #reviews_url = request.form['text1'].strip()
 
-    # Get link
-    text1 = request.form['text1'].strip()
+    len_page = 10
 
-    try:
-        # Get reviews from a link-
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36'}
 
-        s = requests.Session()
-        res = s.get(text1, headers=headers, verify=False)
+    def reviewsHtml(url, len_page):
+        
+        
+        soups = []
+        
+        
+        for page_no in range(1, len_page + 1):
+            
+        
+            params = {
+                'ie': 'UTF8',
+                'reviewerType': 'all_reviews',
+                'filterByStar': 'critical',
+                'pageNumber': page_no,
+            }
+            
+            
+            response = requests.get(url, headers=headers)
+            
+        
+            soup = BeautifulSoup(response.text, 'lxml')
+            soups.append(soup)
+            
+        return soups
 
-        if res.status_code != 200:
-            error = f"Invalid URL - Status Code: {res.status_code}"
-            return render_template('error.html', error=error)
 
-        soup = BeautifulSoup(res.text, "lxml")
+    def getReviews(html_data):
 
-        script = None
-        for s in soup.find_all("script"):
-            if 'pdpData' in s.text:
-                script = s.get_text(strip=True)
-                break
+        
+        data_dicts = []
+        boxes = html_data.select('div[data-hook="review"]')
+        
+        
+        for box in boxes:
+            
+        
+            try:
+                name = box.select_one('[class="a-profile-name"]').text.strip()
+            except Exception as e:
+                name = 'N/A'
 
-        PDPData = json.loads(script[script.index('{'):])
-        reviewStr = ''
-        error = ''
+            try:
+                stars = box.select_one('[data-hook="review-star-rating"]').text.strip().split(' out')[0]
+            except Exception as e:
+                stars = 'N/A'   
 
-        # Check if having ratings or not-
-        if len(PDPData["pdpData"]["ratings"]["reviewInfo"]["topReviews"]) != 0:
+            try:
+                title = box.select_one('[data-hook="review-title"]').text.strip()
+            except Exception as e:
+                title = 'N/A'
 
-            # Check if reviews section is expanded or not-
-            if "reviewsData" in PDPData:
-                # Retrive each review and combine them in a reviewStr-
+            try:
+                datetime_str = box.select_one('[data-hook="review-date"]').text.strip().split(' on ')[-1]
+                date = datetime.strptime(datetime_str, '%B %d, %Y').strftime("%d/%m/%Y")
+            except Exception as e:
+                date = 'N/A'
 
-                for i in PDPData["reviewsData"]["reviews"]:
-                    reviewStr += i["review"] + ' '
+            try:
+                description = box.select_one('[data-hook="review-body"]').text.strip()
+            except Exception as e:
+                description = 'N/A'
 
-                if "reviewsMetaData" in PDPData["reviewsData"]:
-                    for i in PDPData["reviewsData"]["reviewsMetaData"]["topImageReviewEntries"]:
-                        reviewStr += i["review"] +' '
-                
-                # print(reviewStr)
+            
+            data_dict = {
+                'Name' : name,
+                'Stars' : stars,
+                'Title' : title,
+                'Date' : date,
+                'Description' : description
+            }
 
-            else:
-                error = "Please extend the review list and then provide the link"
-                return render_template('error.html', error=error)
+            
+            data_dicts.append(data_dict)
+        
+        return data_dicts
 
-        else:
-            error = "No rating for given product"
-            return render_template('error.html', error=error)
 
-        text_final = ''.join(c for c in reviewStr if not c.isdigit())
-        # remove stopwords
 
-        processed_doc1 = ' '.join(
-            [word for word in text_final.split() if word not in stop_words])
+    html_datas = reviewsHtml(reviews_url, len_page)
 
-        # remove punctuations
-        #text3 = ''.join(c for c in text2 if c not in punctuation)
+    reviews = []
 
-        sa = SentimentIntensityAnalyzer()
-        dd = sa.polarity_scores(text=processed_doc1)
-        compound = round((1 + dd['compound'])/2, 2)
-        return render_template('result.html', final=compound, text1=text_final, text2=dd['pos'], text5=dd['neg'], text4=compound, text3=dd['neu'])
+    for html_data in html_datas:
+        
+    
+        review = getReviews(html_data)
+        reviews += review
+    df_reviews = pd.DataFrame(reviews)
 
-    except requests.exceptions.RequestException as e:
-        error = f"Error fetching the URL: {str(e)}"
-        return render_template('error.html', error=error)
+    print(df_reviews)
+    df_reviews.to_csv('reviews.csv', index=False)
 
 
 if __name__ == "__main__":
