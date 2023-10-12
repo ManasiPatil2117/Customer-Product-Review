@@ -1,82 +1,84 @@
 {% block section %}
 
 <head>
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="{{ url_for('static', filename='results.css') }}"
-  />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='results.css') }}" />
 </head>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<center>
-  <h1>Customer Sentiment Analyzer</h1>
-<div id="simple_chart"></div>
 
-<script type="text/javascript">
-  google.charts.load('current', { 'packages': ['corechart'] });
-  google.charts.setOnLoadCallback(drawChart);
+<div class="main-container">
+  <center>
+    <h1>Customer Sentiment Analyzer</h1> <br></br>
+    <div id="simple_chart"></div>
 
-  function drawChart() {
+    <script type="text/javascript">
+      google.charts.load('current', { 'packages': ['corechart'] });
+      google.charts.setOnLoadCallback(drawChart);
 
-    var data = new google.visualization.DataTable();
-    data.addColumn('string', 'Sentiment Analysis');
-    data.addColumn('number', 'Score');
-    data.addRows([['Strong Positive', {{ spositive }}], ['Positive', {{ positive }}], ['Weak Positive', {{ wpositive }}], ['Neutral', {{ neutral }}], ['Strong Negative', {{ snegative }}], ['Negative', {{ negative }}]], ['Weak Negative', {{ wnegative }}]);
-  var options = {
-    'title': 'Sentiment Analysis Chart',
-    'width': 600,
-    'height': 400,
-  };
+      function drawChart() {
 
-  var simple_chart = new google.visualization.PieChart(document.getElementById('simple_chart'));
-  simple_chart.draw(data, options);
-   }
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Sentiment Analysis');
+        data.addColumn('number', 'Score');
+        data.addRows([['Strong Positive', {{ spositive }}], ['Positive', {{ positive }}], ['Weak Positive', {{ wpositive }}], ['Neutral', {{ neutral }}], ['Strong Negative', {{ snegative }}], ['Negative', {{ negative }}]], ['Weak Negative', {{ wnegative }}]);
+      var options = {
+        'title': 'Sentiment Analysis Chart',
+        'width': 600,
+        'height': 400,
+      };
 
-</script>
+      var simple_chart = new google.visualization.PieChart(document.getElementById('simple_chart'));
+      simple_chart.draw(data, options);
+     }
 
-<h2>Score table</h2>
+    </script>
 
-<table style="width: 100%">
-  <tr>
-    <th>SENTIMENT METRIC</th>
-    <th>SCORE</th>
-  </tr>
-  <tr>
-    <td>Strong Positive</td>
-    <td>{{ spositive }}</td>
-  </tr>
-  <tr>
-    <td>Positive</td>
-    <td>{{ positive }}</td>
-  </tr>
-  <tr>
-    <td>Weak Positive</td>
-    <td>{{ wpositive }}</td>
-  </tr>
-  <tr>
-    <td>Neutral</td>
-    <td>{{ neutral }}</td>
-  </tr>
-  <tr>
-    <td>Strong Negative</td>
-    <td>{{ snegative }}</td>
-  </tr>
-  <tr>
-    <td>Negative</td>
-    <td>{{ negative }}</td>
-  </tr>
-  <tr>
-    <td>Weak Negative</td>
-    <td>{{ negative }}</td>
-  </tr>
+    <br></br>
 
-</table>
+
+    <table style="width: 100%">
+      <tr>
+        <th>SENTIMENT METRIC</th>
+        <th>SCORE</th>
+      </tr>
+      <tr>
+        <td>Strong Positive</td>
+        <td>{{ spositive }}</td>
+      </tr>
+      <tr>
+        <td>Positive</td>
+        <td>{{ positive }}</td>
+      </tr>
+      <tr>
+        <td>Weak Positive</td>
+        <td>{{ wpositive }}</td>
+      </tr>
+      <tr>
+        <td>Neutral</td>
+        <td>{{ neutral }}</td>
+      </tr>
+      <tr>
+        <td>Strong Negative</td>
+        <td>{{ snegative }}</td>
+      </tr>
+      <tr>
+        <td>Negative</td>
+        <td>{{ negative }}</td>
+      </tr>
+      <tr>
+        <td>Weak Negative</td>
+        <td>{{ negative }}</td>
+      </tr>
+
+    </table>
 </div>
-<center>
-<center>
-  <a href="/">
-    <button type="submit" class="example_a">Back to Form</button>
-  </a>
 </center>
-<div>
+  <center>
+    <a href="/">
+      <button type="submit" class="example_a">Back to Form</button>
+    </a>
+  </center>
+  <div>
+
+  </div>
+
   {% endblock section %}
