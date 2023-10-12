@@ -2,72 +2,71 @@
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
 <div id="simple_chart"></div>
-{% if final %}
-<div>
-  <h2>The Sentiment of</h2>
-  '{{ text1 }}'
-  <h2>is {{ final * 100 }}% positive !</h2>
-  <h2>Score table</h2>
-
-  <table style="width: 100%">
-    <tr>
-      <th>SENTIMENT METRIC</th>
-      <th>SCORE</th>
-    </tr>
-    <tr>
-      <td>Positive</td>
-      <td>{{ text2 }}</td>
-    </tr>
-    <tr>
-      <td>Neutral</td>
-      <td>{{ text3 }}</td>
-    </tr>
-    <tr>
-      <td>Negative</td>
-      <td>{{ text5 }}</td>
-    </tr>
-    <tr>
-      <td>Compound</td>
-      <td>{{ text4 }}</td>
-    </tr>
-  </table>
-</div>
-{% endif %}
 
 <script type="text/javascript">
-   google.charts.load('current', { 'packages': ['corechart'] });
-   google.charts.setOnLoadCallback(drawChart);
+  google.charts.load('current', { 'packages': ['corechart'] });
+  google.charts.setOnLoadCallback(drawChart);
 
-   function drawChart() {
-       var t1 = {{ text2 }};
-       var t5 = {{ text5 }};
-       if ({{ text3 }} == 1) {
-           t1 = t5 = 1;
-       }
+  function drawChart() {
 
-       var data = new google.visualization.DataTable();
-       data.addColumn('string', 'Sentiment Analysis');
-       data.addColumn('number', 'Score');
-       data.addRows([['Positive', t1], ['Negative', t5]]);
-       var options = {
-           'title': 'Sentiment Analysis Chart',
-           'width': 600,
-           'height': 400,
-       };
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Sentiment Analysis');
+    data.addColumn('number', 'Score');
+    data.addRows([['Strong Positive', {{ spositive }}], ['Positive', {{ positive }}], ['Weak Positive', {{ wpositive }}], ['Neutral', {{ neutral }}], ['Strong Negative', {{ snegative }}], ['Negative', {{ negative }}]], ['Weak Negative', {{ wnegative }}]);
+  var options = {
+    'title': 'Sentiment Analysis Chart',
+    'width': 600,
+    'height': 400,
+  };
 
-       var simple_chart = new google.visualization.PieChart(document.getElementById('simple_chart'));
-       simple_chart.draw(data, options);
+  var simple_chart = new google.visualization.PieChart(document.getElementById('simple_chart'));
+  simple_chart.draw(data, options);
    }
 
-  // function deleteChart() {
-  //     document.getElementById('simple_chart').innerHTML = '';
-  // }
 </script>
 
+<h2>Score table</h2>
+
+<table style="width: 100%">
+  <tr>
+    <th>SENTIMENT METRIC</th>
+    <th>SCORE</th>
+  </tr>
+  <tr>
+    <td>Strong Positive</td>
+    <td>{{ spositive }}</td>
+  </tr>
+  <tr>
+    <td>Positive</td>
+    <td>{{ positive }}</td>
+  </tr>
+  <tr>
+    <td>Weak Positive</td>
+    <td>{{ wpositive }}</td>
+  </tr>
+  <tr>
+    <td>Neutral</td>
+    <td>{{ neutral }}</td>
+  </tr>
+  <tr>
+    <td>Strong Negative</td>
+    <td>{{ snegative }}</td>
+  </tr>
+  <tr>
+    <td>Negative</td>
+    <td>{{ negative }}</td>
+  </tr>
+  <tr>
+    <td>Weak Negative</td>
+    <td>{{ negative }}</td>
+  </tr>
+
+</table>
+</div>
 <center>
   <a href="/">
     <button type="submit" class="example_a">Back to Form</button>
   </a>
 </center>
-
-{% endblock section %}
+<div>
+  {% endblock section %}

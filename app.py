@@ -7,8 +7,33 @@ from string import punctuation
 import re
 from nltk.corpus import stopwords
 import requests
-import json
 from bs4 import BeautifulSoup
+import pandas as pd
+import numpy as np
+# for data cleaning
+import string
+import re
+# for removing accented and special chracters
+import unicodedata
+# for stopwords Removal
+from nltk.corpus import stopwords
+
+from nltk.tokenize import word_tokenize
+# for calculating Polarity and Subjectivity
+from textblob import TextBlob
+import matplotlib.pyplot as plt
+import seaborn as sns
+# function for making ngrams
+from nltk.util import ngrams
+# load in all the modules we're going to need
+import nltk
+import collections
+# for Wordscloud
+# from wordcloud import WordCloud
+from sklearn.feature_extraction.text import CountVectorizer
+import string
+
+
 
 nltk.download('stopwords')
 
@@ -27,69 +52,315 @@ def my_form_post():
     stop_words = stopwords.words('english')
 
     # Get link
-    text1 = request.form['text1'].strip()
-
+    reviews_url = request.form['productLink'].strip()
+    print("URL --- " +reviews_url )
     try:
         # Get reviews from a link-
         headers = {
+            'authority': 'www.amazon.com',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'accept-language': 'en-US,en;q=0.9,bn;q=0.8',
+            'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36'}
 
         s = requests.Session()
-        res = s.get(text1, headers=headers, verify=False)
+        # res = s.get(reviews_url, headers=headers, verify=False)
 
-        if res.status_code != 200:
-            error = f"Invalid URL - Status Code: {res.status_code}"
-            return render_template('error.html', error=error)
+        len_page = 10
 
-        soup = BeautifulSoup(res.text, "lxml")
 
-        script = None
-        for s in soup.find_all("script"):
-            if 'pdpData' in s.text:
-                script = s.get_text(strip=True)
-                break
-
-        PDPData = json.loads(script[script.index('{'):])
-        reviewStr = ''
-        error = ''
-
-        # Check if having ratings or not-
-        if len(PDPData["pdpData"]["ratings"]["reviewInfo"]["topReviews"]) != 0:
-
-            # Check if reviews section is expanded or not-
-            if "reviewsData" in PDPData:
-                # Retrive each review and combine them in a reviewStr-
-
-                for i in PDPData["reviewsData"]["reviews"]:
-                    reviewStr += i["review"] + ' '
-
-                if "reviewsMetaData" in PDPData["reviewsData"]:
-                    for i in PDPData["reviewsData"]["reviewsMetaData"]["topImageReviewEntries"]:
-                        reviewStr += i["review"] +' '
+        def reviewsHtml(url, len_page):
+            
+            
+            soups = []
+            
+            
+            for page_no in range(1, len_page + 1):
                 
-                # print(reviewStr)
+            
+                params = {
+                    'ie': 'UTF8',
+                    'reviewerType': 'all_reviews',
+                    'filterByStar': 'critical',
+                    'pageNumber': page_no,
+                }
+                
+                
+                response = requests.get(url, headers=headers)
+                
+            
+                soup = BeautifulSoup(response.text, 'lxml')
+                soups.append(soup)
+                
+            return soups
 
-            else:
-                error = "Please extend the review list and then provide the link"
-                return render_template('error.html', error=error)
 
-        else:
-            error = "No rating for given product"
-            return render_template('error.html', error=error)
+        def getReviews(html_data):
 
-        text_final = ''.join(c for c in reviewStr if not c.isdigit())
-        # remove stopwords
+            
+            data_dicts = []
+            boxes = html_data.select('div[data-hook="review"]')
+            
+            
+            for box in boxes:
+                
+            
+                try:
+                    name = box.select_one('[class="a-profile-name"]').text.strip()
+                except Exception as e:
+                    name = 'N/A'
 
-        processed_doc1 = ' '.join(
-            [word for word in text_final.split() if word not in stop_words])
+                try:
+                    stars = box.select_one('[data-hook="review-star-rating"]').text.strip().split(' out')[0]
+                except Exception as e:
+                    stars = 'N/A'   
 
-        # remove punctuations
-        #text3 = ''.join(c for c in text2 if c not in punctuation)
+                try:
+                    title = box.select_one('[data-hook="review-title"]').text.strip()
+                except Exception as e:
+                    title = 'N/A'
 
-        sa = SentimentIntensityAnalyzer()
-        dd = sa.polarity_scores(text=processed_doc1)
-        compound = round((1 + dd['compound'])/2, 2)
-        return render_template('result.html', final=compound, text1=text_final, text2=dd['pos'], text5=dd['neg'], text4=compound, text3=dd['neu'])
+                try:
+                    datetime_str = box.select_one('[data-hook="review-date"]').text.strip().split(' on ')[-1]
+                    date = datetime.strptime(datetime_str, '%B %d, %Y').strftime("%d/%m/%Y")
+                except Exception as e:
+                    date = 'N/A'
+
+                try:
+                    description = box.select_one('[data-hook="review-body"]').text.strip()
+                except Exception as e:
+                    description = 'N/A'
+
+                
+                data_dict = {
+                    'Name' : name,
+                    'Stars' : stars,
+                    'Title' : title,
+                    'Date' : date,
+                    'Text' : description
+                }
+
+                
+                data_dicts.append(data_dict)
+            
+            return data_dicts
+
+
+
+        html_datas = reviewsHtml(reviews_url, len_page)
+
+        reviews = []
+
+        for html_data in html_datas:
+            
+        
+            review = getReviews(html_data)
+            reviews += review
+        df_reviews = pd.DataFrame(reviews)
+
+        print(df_reviews)
+        df_reviews.to_csv('./input/Reviews.csv', index=False)
+       
+        # Read the Dataset
+        df=pd.read_csv('./input/Reviews.csv')
+        df.head()
+        df.info()
+        df['Text']
+
+        # Clean the Dataset
+        # First lets remove Punctuations from the Reviews
+        def punctuation_removal(messy_str):
+            clean_list = [char for char in messy_str if char not in string.punctuation]
+            clean_str = ''.join(clean_list)
+            return clean_str
+
+        df['Text'] = df['Text'].apply(punctuation_removal)
+        print("NOT HERE")
+        # lets make a function to remove Numbers from the reviews
+        def drop_numbers(list_text):
+            list_text_new = []
+            for i in list_text:
+                if not re.search(r'\d', i):
+                    list_text_new.append(i)
+            return ''.join(list_text_new)
+
+        df['Text'] = df['Text'].apply(drop_numbers)
+
+        # lets show the Top 10 Reviews after Removal of Punctuations and Numbers
+        df['Text'].head(10)
+
+        ### Removing Accented Characters
+
+        
+        # lets create a function to remove accented characters
+        def remove_accented_chars(text):
+            new_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
+            return new_text
+
+        # lets apply the function
+        df['Text'] = df.apply(lambda x: remove_accented_chars(x['Text']), axis = 1)
+
+        # Create a function to remove special characters
+        def remove_special_characters(text):
+            pat = r'[^a-zA-z0-9]' 
+            return re.sub(pat, ' ', text)
+        
+        # lets apply this function
+        df['Text'] = df.apply(lambda x: remove_special_characters(x['Text']), axis = 1)
+
+        # Feature Engineering
+
+        # lets check if the dataset has any Missing Values
+        df.isnull().sum()
+
+        # Lets calculate the length of the Reviews
+        df['length'] = df['Text'].apply(len)
+
+        #Text Polarity
+        # It is the expression that determines the sentimental aspect of an opinion. In textual data, the result of sentiment analysis can be determined for each entity in the sentence, document or sentence. The sentiment polarity can be determined as positive, negative and neutral.
+
+        # Lets calculate the Polarity of the Reviews
+        def get_polarity(text):
+            textblob = TextBlob(str(text.encode('utf-8')))
+            pol = textblob.sentiment.polarity
+            return pol
+
+        # lets apply the function
+        df['polarity'] = df['Text'].apply(get_polarity)
+
+        # Text Subjectivity
+        # In natural language, subjectivity refers to expression of opinions, evaluations, feelings, and speculations and thus incorporates sentiment. Subjective text is further classified with sentiment or polarity.
+
+        # Lets calculate the Subjectvity of the Reviews
+        def get_subjectivity(text):
+            textblob = TextBlob(str(text.encode('utf-8')))
+            subj = textblob.sentiment.subjectivity
+            return subj
+
+        # lets apply the Function
+        df['subjectivity'] = df['Text'].apply(get_subjectivity)
+
+        ## lets summarize the Newly Created Features
+        df[['length','polarity','subjectivity']].describe()
+
+        # calculating the Character Count in the Reviews
+        df['char_count'] = df['Text'].apply(len)
+
+        # calculating the Word Count
+        df['word_count'] = df['Text'].apply(lambda x: len(x.split()))
+
+        # Calculating the Word Density
+        df['word_density'] = df['char_count'] / (df['word_count']+1)
+
+        # importing the List of Punctuations
+        
+        punctuation = string.punctuation
+
+        # Calculating the Punctuation Count
+        df['punctuation_count'] = df['Text'].apply(lambda x: len("".join(_ for _ in x if _ in punctuation))) 
+
+        ## lets summarize the Newly Created Features
+        df[['char_count','word_count','word_density','punctuation_count']].describe()
+
+        # Make Visulization
+        # Lets calculate the Polarity of the Reviews
+        def get_polarity(text):
+            textblob = TextBlob(str(text))
+            pol = textblob.sentiment.polarity
+            if(pol==0):
+                return "Neutral"
+            elif(pol>0 and pol<=0.3):
+                return "Weakly Positive"
+            elif(pol>0.3 and pol<=0.6):
+                return "Positive"
+            elif(pol>0.6 and pol<=1):
+                return "Strongly Positive"
+            elif(pol>-0.3 and pol<=0):
+                return "Weakly Negative"
+            elif(pol>-0.6 and pol<=-0.3):
+                return "Negative"
+            elif(pol>-1 and pol<=-0.6):
+                return "Strongly Negative"
+            
+        df['polarity'] = df['Text'].apply(get_polarity)
+
+        df['polarity'].value_counts()
+        neutral = 0
+        wpositive = 0
+        spositive = 0
+        positive = 0
+        negative = 0
+        wnegative = 0
+        snegative = 0
+        polarity = 0
+        for i in range(0,22):
+            textblob = TextBlob(str(df['Text'][i]))
+            polarity+= textblob.sentiment.polarity
+            pol = textblob.sentiment.polarity
+            if (pol == 0):  # adding reaction of how people are reacting to find average later
+                neutral += 1
+            elif (pol > 0 and pol <= 0.3):
+                wpositive += 1
+            elif (pol > 0.3 and pol <= 0.6):
+                positive += 1
+            elif (pol > 0.6 and pol <= 1):
+                spositive += 1
+            elif (pol > -0.3 and pol <= 0):
+                wnegative += 1
+            elif (pol > -0.6 and pol <= -0.3):
+                negative += 1
+            elif (pol > -1 and pol <= -0.6):
+                snegative += 1
+
+        # input for term to be searched and how many Review to search
+        searchTerm = "22"
+        NoOfTerms = 22
+
+        # finding average reaction
+        polarity = polarity / NoOfTerms
+        polarity
+
+        # To calculate the Prsentage
+        def percentage(part, whole):
+            temp = 100 * float(part) / float(whole)
+            return format(temp, '.2f')
+
+        # finding average of how people are reacting
+        positive = percentage(positive, NoOfTerms)
+        wpositive = percentage(wpositive, NoOfTerms)
+        spositive = percentage(spositive, NoOfTerms)
+        negative = percentage(negative, NoOfTerms)
+        wnegative = percentage(wnegative, NoOfTerms)
+        snegative = percentage(snegative, NoOfTerms)
+        neutral = percentage(neutral, NoOfTerms)
+
+        # printing out data
+        print("How people are reacting on " + searchTerm + " by analyzing " + str(NoOfTerms) + " Review.")
+        print()
+        print("-----------------------------------------------------------------------------------------")
+        print()
+        print("General Report: ")
+
+        if (polarity == 0):
+            print("Neutral")
+        elif (polarity > 0 and polarity <= 0.3):
+            print("Weakly Positive")
+        elif (polarity > 0.3 and polarity <= 0.6):
+            print("Positive")
+        elif (polarity > 0.6 and polarity <= 1):
+            print("Strongly Positive")
+        elif (polarity > -0.3 and polarity <= 0):
+            print("Weakly Negative")
+        elif (polarity > -0.6 and polarity <= -0.3):
+            print("Negative")
+        elif (polarity > -1 and polarity <= -0.6):
+            print("Strongly Negative")
+
+        print()
+        print("------------------------------------------------------------------------------------------")
+        # compound = round((1 + dd['compound'])/2, 2)
+        return render_template('result.html', positive=positive, negative=negative, wpositive=wpositive, neutral=neutral, spositive = spositive, wnegative=wnegative, snegative=snegative)
 
     except requests.exceptions.RequestException as e:
         error = f"Error fetching the URL: {str(e)}"
