@@ -21,7 +21,7 @@ The "Customer Product Review Sentiment Analysis" project is a Python application
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/YourUsername/YourRepository.git](https://github.com/ManasiPatil2117/Customer-Product-Review.git
+   git clone https://github.com/ManasiPatil2117/Customer-Product-Review.git
 
 2. Install the required files:
 
