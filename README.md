@@ -4,7 +4,6 @@
 
 The "Customer Product Review Sentiment Analysis" project is a Python application that performs sentiment analysis on Amazon product reviews. The application scrapes data from Amazon product pages and provides sentiment analysis results in categories such as "Strongly Positive," "Positive," "Weakly Positive," "Neutral," "Strongly Negative," "Negative," and "Weakly Negative." This project is useful for understanding customer sentiments towards products on Amazon.
 
-![Screenshot of the Application](screenshot.png)
 
 ## Features
 
@@ -30,6 +29,22 @@ The "Customer Product Review Sentiment Analysis" project is a Python application
    pip install -r requirements.txt
 
 3. Run the application:
-```bash
-python main.py
+
+   ```bash
+   python main.py
+
+## Usage
+   1. Enter the URL of the Amazon product page you want to analyze.
+   2. The application will scrape the reviews and perform sentiment analysis.
+   3. The results will be displayed, showing the distribution of sentiments in the reviews.
+
+## Contributing
+Contributions to this project are welcome. 
+
+To contribute:
+   - Fork the repository.
+   - Create a new branch for your feature or bug fix.
+   - Make your changes and test them.
+   - Submit a pull request with a clear description of your changes.
+
 
