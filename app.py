@@ -131,7 +131,7 @@ def my_form_post():
         df['Text']
 
         # Clean the Dataset
-        # First lets remove Punctuations from the Reviews
+        # remove Punctuations from the Reviews
         def punctuation_removal(messy_str):
             clean_list = [char for char in messy_str if char not in string.punctuation]
             clean_str = ''.join(clean_list)
@@ -139,7 +139,8 @@ def my_form_post():
 
         df['Text'] = df['Text'].apply(punctuation_removal)
         print("NOT HERE")
-        # lets make a function to remove Numbers from the reviews
+        
+        #remove Numbers from the reviews
         def drop_numbers(list_text):
             list_text_new = []
             for i in list_text:
@@ -149,82 +150,74 @@ def my_form_post():
 
         df['Text'] = df['Text'].apply(drop_numbers)
 
-        # lets show the Top 10 Reviews after Removal of Punctuations and Numbers
+        
         df['Text'].head(10)
 
-        ### Removing Accented Characters
+      
 
         
-        # lets create a function to remove accented characters
+        # remove accented characters
         def remove_accented_chars(text):
             new_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
             return new_text
 
-        # lets apply the function
+       
         df['Text'] = df.apply(lambda x: remove_accented_chars(x['Text']), axis = 1)
 
-        # Create a function to remove special characters
+        #remove special characters
         def remove_special_characters(text):
             pat = r'[^a-zA-z0-9]' 
             return re.sub(pat, ' ', text)
         
-        # lets apply this function
+     
         df['Text'] = df.apply(lambda x: remove_special_characters(x['Text']), axis = 1)
 
-        #13 Feature Engineering
+      
 
-        # lets check if the dataset has any Missing Values
+        
         df.isnull().sum()
 
-        # Lets calculate the length of the Reviews
+       
         df['length'] = df['Text'].apply(len)
 
         ## Text Polarity
 
-        # Lets calculate the Polarity of the Reviews
+        
         def get_polarity(text):
             textblob = TextBlob(str(text.encode('utf-8')))
             pol = textblob.sentiment.polarity
             return pol
 
-        # lets apply the function
+      
         df['polarity'] = df['Text'].apply(get_polarity)
 
         # Text Subjectivity
-
-        # Lets calculate the Subjectvity of the Reviews
         def get_subjectivity(text):
             textblob = TextBlob(str(text.encode('utf-8')))
             subj = textblob.sentiment.subjectivity
             return subj
 
-        # lets apply the Function
+     
         df['subjectivity'] = df['Text'].apply(get_subjectivity)
 
-        ## lets summarize the Newly Created Features
+        
         df[['length','polarity','subjectivity']].describe()
 
-        # calculating the Character Count in the Reviews
+       
         df['char_count'] = df['Text'].apply(len)
-
-        # calculating the Word Count
         df['word_count'] = df['Text'].apply(lambda x: len(x.split()))
-
-        # Calculating the Word Density
         df['word_density'] = df['char_count'] / (df['word_count']+1)
 
-        # importing the List of Punctuations
+        
         
         punctuation = string.punctuation
 
-        # Calculating the Punctuation Count
+        
         df['punctuation_count'] = df['Text'].apply(lambda x: len("".join(_ for _ in x if _ in punctuation))) 
 
-        ## lets summarize the Newly Created Features
+        
         df[['char_count','word_count','word_density','punctuation_count']].describe()
 
-        # Make Visulization
-        # Lets calculate the Polarity of the Reviews
         def get_polarity(text):
             textblob = TextBlob(str(text))
             pol = textblob.sentiment.polarity
@@ -279,7 +272,7 @@ def my_form_post():
         polarity = polarity / NoOfTerms
         polarity
 
-        # To calculate the Prsentage
+        # To calculate the %
         def percentage(part, whole):
             temp = 100 * float(part) / float(whole)
             return format(temp, '.2f')
@@ -293,7 +286,7 @@ def my_form_post():
         snegative = percentage(snegative, NoOfTerms)
         neutral = percentage(neutral, NoOfTerms)
 
-        # printing out data
+       
         print("How people are reacting on " + searchTerm + " by analyzing " + str(NoOfTerms) + " Review.")
         print()
         print("-----------------------------------------------------------------------------------------")
