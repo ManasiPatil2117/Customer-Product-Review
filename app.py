@@ -7,8 +7,6 @@ import string
 import re
 import unicodedata
 from textblob import TextBlob
-import matplotlib.pyplot as plt
-import seaborn as sns
 import string
 
 app = Flask(__name__)
@@ -25,7 +23,6 @@ def my_form_post():
 
     # Get link
     reviews_url = request.form['productLink'].strip()
-    print("URL --- " +reviews_url )
     try:
         # Get reviews from a link-
         headers = {
@@ -37,7 +34,6 @@ def my_form_post():
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36'}
 
         s = requests.Session()
-        # res = s.get(reviews_url, headers=headers, verify=False)
 
         len_page = 10
 
@@ -47,9 +43,7 @@ def my_form_post():
             
             soups = []
             
-            
             for page_no in range(1, len_page + 1):
-                
             
                 params = {
                     'ie': 'UTF8',
@@ -57,7 +51,6 @@ def my_form_post():
                     'filterByStar': 'critical',
                     'pageNumber': page_no,
                 }
-                
                 
                 response = requests.get(url, headers=headers)
                 
@@ -70,16 +63,12 @@ def my_form_post():
                 
             return soups
 
-
         def getReviews(html_data):
 
-            
             data_dicts = []
             boxes = html_data.select('div[data-hook="review"]')
             
-            
             for box in boxes:
-                
             
                 try:
                     name = box.select_one('[class="a-profile-name"]').text.strip()
@@ -116,35 +105,33 @@ def my_form_post():
                     'Text' : description
                 }
 
-                
                 data_dicts.append(data_dict)
             
             return data_dicts
-
-
 
         html_datas = reviewsHtml(reviews_url, len_page)
 
         reviews = []
 
         for html_data in html_datas:
-            
         
             review = getReviews(html_data)
             reviews += review
+        
         df_reviews = pd.DataFrame(reviews)
 
         print(df_reviews)
         df_reviews.to_csv('./input/Reviews.csv', index=False)
        
         # Read the Dataset
+        
         df=pd.read_csv('./input/Reviews.csv')
         df.head()
         df.info()
         df['Text']
 
         # Clean the Dataset
-       
+        # First lets remove Punctuations from the Reviews
         def punctuation_removal(messy_str):
             clean_list = [char for char in messy_str if char not in string.punctuation]
             clean_str = ''.join(clean_list)
@@ -152,7 +139,7 @@ def my_form_post():
 
         df['Text'] = df['Text'].apply(punctuation_removal)
         print("NOT HERE")
-
+        # lets make a function to remove Numbers from the reviews
         def drop_numbers(list_text):
             list_text_new = []
             for i in list_text:
@@ -162,62 +149,62 @@ def my_form_post():
 
         df['Text'] = df['Text'].apply(drop_numbers)
 
-  
+        # lets show the Top 10 Reviews after Removal of Punctuations and Numbers
         df['Text'].head(10)
 
         ### Removing Accented Characters
 
-
+        
+        # lets create a function to remove accented characters
         def remove_accented_chars(text):
             new_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
             return new_text
 
-        
+        # lets apply the function
         df['Text'] = df.apply(lambda x: remove_accented_chars(x['Text']), axis = 1)
 
+        # Create a function to remove special characters
         def remove_special_characters(text):
             pat = r'[^a-zA-z0-9]' 
             return re.sub(pat, ' ', text)
         
-
+        # lets apply this function
         df['Text'] = df.apply(lambda x: remove_special_characters(x['Text']), axis = 1)
 
-        # Feature Engineering
+        #13 Feature Engineering
 
-        # check if the dataset has any Missing Values
+        # lets check if the dataset has any Missing Values
         df.isnull().sum()
 
-        # calculate the length of the Reviews
+        # Lets calculate the length of the Reviews
         df['length'] = df['Text'].apply(len)
 
-        #Text Polarity
-        # It is the expression that determines the sentimental aspect of an opinion. In textual data, the result of sentiment analysis can be determined for each entity in the sentence, document or sentence. The sentiment polarity can be determined as positive, negative and neutral.
+        ## Text Polarity
 
-       
+        # Lets calculate the Polarity of the Reviews
         def get_polarity(text):
             textblob = TextBlob(str(text.encode('utf-8')))
             pol = textblob.sentiment.polarity
             return pol
 
-       
+        # lets apply the function
         df['polarity'] = df['Text'].apply(get_polarity)
 
         # Text Subjectivity
-        # In natural language, subjectivity refers to expression of opinions, evaluations, feelings, and speculations and thus incorporates sentiment. Subjective text is further classified with sentiment or polarity.
 
-        
+        # Lets calculate the Subjectvity of the Reviews
         def get_subjectivity(text):
             textblob = TextBlob(str(text.encode('utf-8')))
             subj = textblob.sentiment.subjectivity
             return subj
 
-      
+        # lets apply the Function
         df['subjectivity'] = df['Text'].apply(get_subjectivity)
 
-       
+        ## lets summarize the Newly Created Features
         df[['length','polarity','subjectivity']].describe()
 
-      
+        # calculating the Character Count in the Reviews
         df['char_count'] = df['Text'].apply(len)
 
         # calculating the Word Count
@@ -226,17 +213,18 @@ def my_form_post():
         # Calculating the Word Density
         df['word_density'] = df['char_count'] / (df['word_count']+1)
 
+        # importing the List of Punctuations
         
         punctuation = string.punctuation
 
         # Calculating the Punctuation Count
         df['punctuation_count'] = df['Text'].apply(lambda x: len("".join(_ for _ in x if _ in punctuation))) 
 
-      
+        ## lets summarize the Newly Created Features
         df[['char_count','word_count','word_density','punctuation_count']].describe()
 
         # Make Visulization
-    
+        # Lets calculate the Polarity of the Reviews
         def get_polarity(text):
             textblob = TextBlob(str(text))
             pol = textblob.sentiment.polarity
@@ -266,11 +254,13 @@ def my_form_post():
         wnegative = 0
         snegative = 0
         polarity = 0
-        for i in range(0,22):
+        NoOfTerms = len(df['Text'])
+
+        for i in range(0,NoOfTerms):
             textblob = TextBlob(str(df['Text'][i]))
             polarity+= textblob.sentiment.polarity
             pol = textblob.sentiment.polarity
-            if (pol == 0):  # adding reaction of how people are reacting to find average later
+            if (pol == 0): 
                 neutral += 1
             elif (pol > 0 and pol <= 0.3):
                 wpositive += 1
@@ -285,15 +275,11 @@ def my_form_post():
             elif (pol > -1 and pol <= -0.6):
                 snegative += 1
 
-        # input for term to be searched and how many Review to search
-        searchTerm = "22"
-        NoOfTerms = 22
 
-        # finding average reaction
         polarity = polarity / NoOfTerms
         polarity
 
-        # To calculate the %
+        # To calculate the Prsentage
         def percentage(part, whole):
             temp = 100 * float(part) / float(whole)
             return format(temp, '.2f')
@@ -307,7 +293,7 @@ def my_form_post():
         snegative = percentage(snegative, NoOfTerms)
         neutral = percentage(neutral, NoOfTerms)
 
-      
+        # printing out data
         print("How people are reacting on " + searchTerm + " by analyzing " + str(NoOfTerms) + " Review.")
         print()
         print("-----------------------------------------------------------------------------------------")
