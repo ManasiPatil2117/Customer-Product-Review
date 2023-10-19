@@ -1,0 +1,7 @@
+flask=3.0.0
+scikit-learn
+vaderSentiment
+nltl=3.8.1
+bs4
+BeautifulSoup
+lxml
