@@ -21,10 +21,9 @@ def my_form():
 def my_form_post():
     
 
-    # Get link
     reviews_url = request.form['productLink'].strip()
+
     try:
-        # Get reviews from a link-
         headers = {
             'authority': 'www.amazon.com',
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -37,9 +36,7 @@ def my_form_post():
 
         len_page = 10
 
-
         def reviewsHtml(url, len_page):
-            
             
             soups = []
             
@@ -62,6 +59,7 @@ def my_form_post():
                 soups.append(soup)
                 
             return soups
+
 
         def getReviews(html_data):
 
@@ -96,7 +94,6 @@ def my_form_post():
                 except Exception as e:
                     description = 'N/A'
 
-                
                 data_dict = {
                     'Name' : name,
                     'Stars' : stars,
@@ -108,6 +105,7 @@ def my_form_post():
                 data_dicts.append(data_dict)
             
             return data_dicts
+
 
         html_datas = reviewsHtml(reviews_url, len_page)
 
@@ -123,24 +121,22 @@ def my_form_post():
         print(df_reviews)
         df_reviews.to_csv('./input/Reviews.csv', index=False)
        
-        # Read the Dataset
-        
         df=pd.read_csv('./input/Reviews.csv')
         df.head()
         df.info()
         df['Text']
 
-        # Clean the Dataset
-        # remove Punctuations from the Reviews
+
         def punctuation_removal(messy_str):
             clean_list = [char for char in messy_str if char not in string.punctuation]
             clean_str = ''.join(clean_list)
             return clean_str
 
+
         df['Text'] = df['Text'].apply(punctuation_removal)
         print("NOT HERE")
         
-        #remove Numbers from the reviews
+        
         def drop_numbers(list_text):
             list_text_new = []
             for i in list_text:
@@ -149,14 +145,9 @@ def my_form_post():
             return ''.join(list_text_new)
 
         df['Text'] = df['Text'].apply(drop_numbers)
-
-        
         df['Text'].head(10)
 
-      
 
-        
-        # remove accented characters
         def remove_accented_chars(text):
             new_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
             return new_text
@@ -164,23 +155,17 @@ def my_form_post():
        
         df['Text'] = df.apply(lambda x: remove_accented_chars(x['Text']), axis = 1)
 
-        #remove special characters
+
         def remove_special_characters(text):
             pat = r'[^a-zA-z0-9]' 
             return re.sub(pat, ' ', text)
         
      
         df['Text'] = df.apply(lambda x: remove_special_characters(x['Text']), axis = 1)
-
       
 
-        
         df.isnull().sum()
-
-       
         df['length'] = df['Text'].apply(len)
-
-        ## Text Polarity
 
         
         def get_polarity(text):
@@ -191,7 +176,7 @@ def my_form_post():
       
         df['polarity'] = df['Text'].apply(get_polarity)
 
-        # Text Subjectivity
+
         def get_subjectivity(text):
             textblob = TextBlob(str(text.encode('utf-8')))
             subj = textblob.sentiment.subjectivity
@@ -199,24 +184,16 @@ def my_form_post():
 
      
         df['subjectivity'] = df['Text'].apply(get_subjectivity)
-
-        
         df[['length','polarity','subjectivity']].describe()
-
-       
         df['char_count'] = df['Text'].apply(len)
         df['word_count'] = df['Text'].apply(lambda x: len(x.split()))
         df['word_density'] = df['char_count'] / (df['word_count']+1)
 
-        
-        
         punctuation = string.punctuation
 
-        
         df['punctuation_count'] = df['Text'].apply(lambda x: len("".join(_ for _ in x if _ in punctuation))) 
-
-        
         df[['char_count','word_count','word_density','punctuation_count']].describe()
+
 
         def get_polarity(text):
             textblob = TextBlob(str(text))
@@ -237,8 +214,8 @@ def my_form_post():
                 return "Strongly Negative"
             
         df['polarity'] = df['Text'].apply(get_polarity)
-
         df['polarity'].value_counts()
+
         neutral = 0
         wpositive = 0
         spositive = 0
@@ -268,11 +245,10 @@ def my_form_post():
             elif (pol > -1 and pol <= -0.6):
                 snegative += 1
 
-
         polarity = polarity / NoOfTerms
         polarity
 
-        # To calculate the %
+
         def percentage(part, whole):
             temp = 100 * float(part) / float(whole)
             return format(temp, '.2f')
@@ -285,13 +261,6 @@ def my_form_post():
         wnegative = percentage(wnegative, NoOfTerms)
         snegative = percentage(snegative, NoOfTerms)
         neutral = percentage(neutral, NoOfTerms)
-
-       
-        print("How people are reacting on " + searchTerm + " by analyzing " + str(NoOfTerms) + " Review.")
-        print()
-        print("-----------------------------------------------------------------------------------------")
-        print()
-        print("General Report: ")
 
         if (polarity == 0):
             print("Neutral")
@@ -310,8 +279,8 @@ def my_form_post():
 
         print()
         print("------------------------------------------------------------------------------------------")
-        # compound = round((1 + dd['compound'])/2, 2)
         return render_template('result.html', positive=positive, negative=negative, wpositive=wpositive, neutral=neutral, spositive = spositive, wnegative=wnegative, snegative=snegative)
+
 
     except requests.exceptions.RequestException as e:
         error = f"Error fetching the URL: {str(e)}"
