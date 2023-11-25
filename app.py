@@ -78,15 +78,19 @@ def my_form_post():
             response = requests.get(reviews_url, headers=headers)
 
             if response.status_code != 200:
-                error = f"Invalid URL - Status Code: {response.status_code}"
-                return render_template("error.html", error=error)
+                return f"Invalid URL - Status Code: {response.status_code}"
 
-            rating_count_string2 = BeautifulSoup(response.text, "lxml").select(
+            rating_count_object = BeautifulSoup(response.text, "lxml").select(
                 'div[data-hook="cr-filter-info-review-rating-count"]'
             )
 
+            if not rating_count_object:
+                return "Please provide Amazon Customer Review Page Link"
+
             rating_count_string = " "
-            rating_count_string = [element.text.strip() for element in rating_count_string2]
+            rating_count_string = [
+                element.text.strip() for element in rating_count_object
+            ]
             temp = rating_count_string[0]
             with_reviews_index = temp.find("total ratings,")
 
@@ -96,7 +100,12 @@ def my_form_post():
 
             return int(len_page)
 
-        len_page = get_len_page(len_page)
+        ret_val = get_len_page(len_page)
+
+        if isinstance(ret_val, str):
+            return render_template("error.html", error=ret_val)
+
+        len_page = ret_val
         html_datas = reviewsHtml(reviews_url, math.floor(len_page / 10))
         reviews = []
 
@@ -109,9 +118,6 @@ def my_form_post():
         df_reviews.to_csv("./input/Reviews.csv", index=False)
 
         df = pd.read_csv("./input/Reviews.csv")
-        df.head()
-        df.info()
-        df["Text"]
 
         def punctuation_removal(messy_str):
             clean_list = [char for char in messy_str if char not in string.punctuation]
