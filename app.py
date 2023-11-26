@@ -61,23 +61,29 @@ def get_subjectivity(text):
 
 def reviewsHtml(url, page_no):
 	soups = []
-	print(f"Fetching page -> {page_no}")
 
 	static_reference = "cm_cr_arp_d_paging_btm_next_2"
 	url = url[0:url.rfind("/")]
 	paginated_url = f"{url}/ref={static_reference}?ie=UTF8&reviewerType=all_reviews&pageNumber={page_no}"
-	response = requests.get(url, headers=headers)
+	print(f"{page_no} -> {paginated_url}")
+
+	response = requests.get(paginated_url, headers=headers)
 
 	if response.status_code != 200:
 		error = f"Invalid URL - Status Code: {response.status_code}"
 		print(f"ERROR WHILE FETCHING PAGE - {page_no} Error - {error}")
 
 	soup = BeautifulSoup(response.text, "lxml")
-	soups.append(soup)
 
-	return soups
+	return soup
 
 def getReviews(html_data):
+	print("-"*50)
+	print(type(html_data))
+	# soup = BeautifulSoup(html_data, "html.parser")
+	# html_data = BeautifulSoup(html_data, "html5lib")
+	# html_data = BeautifulSoup(html_data, "lxml")
+
 	data_dicts = []
 	boxes = html_data.select('div[data-hook="review"]')
 
@@ -123,6 +129,24 @@ def get_len_page(reviews_url):
 	return int(len_page)
 
 
+def get_polarity(text):
+	textblob = TextBlob(str(text))
+	pol = textblob.sentiment.polarity
+	if pol == 0:
+		return "Neutral"
+	elif pol > 0 and pol <= 0.3:
+		return "Weakly Positive"
+	elif pol > 0.3 and pol <= 0.6:
+		return "Positive"
+	elif pol > 0.6 and pol <= 1:
+		return "Strongly Positive"
+	elif pol > -0.3 and pol <= 0:
+		return "Weakly Negative"
+	elif pol > -0.6 and pol <= -0.3:
+		return "Negative"
+	elif pol > -1 and pol <= -0.6:
+		return "Strongly Negative"
+
 @app.route("/", methods=["POST"])
 def my_form_post():
 	reviews_url = request.form["productLink"].strip()
@@ -139,20 +163,25 @@ def my_form_post():
 		html_datas = []
 
 		with concurrent.futures.ThreadPoolExecutor(10) as executor:
-			future_complete = [executor.submit(reviewsHtml, reviews_url, page_no) for page_no in range(10)]
+			future_complete = [executor.submit(reviewsHtml, reviews_url, page_no) for page_no in range(1, 10)]
 			
 			print("-"*20)
 			for future in concurrent.futures.as_completed(future_complete):
 				data = future.result()
 				html_datas.append(data)
 				print("-"*20)
-				# print(data)
+				print(type(data))
 		
+		# print(html_datas[0])
+	
 		reviews = []
 
 		for html_data in html_datas:
 			review = getReviews(html_data)
 			reviews += review
+			print("-"*100)
+
+		# return ": )"
 
 		df_reviews = pd.DataFrame(reviews)
 		df = pd.DataFrame(reviews)
@@ -178,25 +207,6 @@ def my_form_post():
 			lambda x: len("".join(_ for _ in x if _ in punctuation))
 		)
 		df[["char_count", "word_count", "word_density", "punctuation_count"]].describe()
-
-		def get_polarity(text):
-			textblob = TextBlob(str(text))
-			pol = textblob.sentiment.polarity
-			if pol == 0:
-				return "Neutral"
-			elif pol > 0 and pol <= 0.3:
-				return "Weakly Positive"
-			elif pol > 0.3 and pol <= 0.6:
-				return "Positive"
-			elif pol > 0.6 and pol <= 1:
-				return "Strongly Positive"
-			elif pol > -0.3 and pol <= 0:
-				return "Weakly Negative"
-			elif pol > -0.6 and pol <= -0.3:
-				return "Negative"
-			elif pol > -1 and pol <= -0.6:
-				return "Strongly Negative"
-
 		df["polarity"] = df["Text"].apply(get_polarity)
 		df["polarity"].value_counts()
 
