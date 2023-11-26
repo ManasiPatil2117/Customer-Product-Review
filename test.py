@@ -33,40 +33,24 @@ def my_form_post():
         s = requests.Session()
 
         def reviewsHtml(url, len_page):
-            
             soups = []
-           
-            for page_no in range(1, len_page+1):
-                print("URL 1 = "+str(page_no)+ "--> "+url)
+
+            for page_no in range(1, len_page + 1):
+                params = {
+                    "ie": "UTF8",
+                    "reviewerType": "all_reviews",
+                    "filterByStar": "critical",
+                    "pageNumber": page_no,
+                }
+
                 response = requests.get(url, headers=headers)
-                s = BeautifulSoup(response.text, "lxml")
-                
-                soups.append(s)
-                a_last_element = s.find('li', class_='a-last')
-                if a_last_element:
-                    anchor_element = a_last_element.find('a')
 
-                    if anchor_element:
-                        href_value = "http://www.amazon.in"+anchor_element.get('href')
-                        url = href_value
-                        print("--------------------")
-                        print("HREF Values:-" +href_value)
-                    else:
-                        print('Anchor tag not found within the element with class "a-last".')
-                        break
-                else:
-                    print('Element with class "a-last" not found.')
-                
-    
-                response2 = requests.get(href_value, headers=headers)
-                #print(response2.text)
-
-                if response2.status_code != 200:
+                if response.status_code != 200:
                     error = f"Invalid URL - Status Code: {response.status_code}"
                     return render_template("error.html", error=error)
 
-                soup = BeautifulSoup(response2.text, "lxml")
-                #soups.append(soup)
+                soup = BeautifulSoup(response.text, "lxml")
+                soups.append(soup)
                 
 
             return soups
@@ -91,7 +75,7 @@ def my_form_post():
 
         len_page = 10
 
-        def get_len_page():
+        def get_len_page(len_page):
             response = requests.get(reviews_url, headers=headers)
 
             if response.status_code != 200:
@@ -111,10 +95,9 @@ def my_form_post():
                 substring_before = temp[with_reviews_index:].strip()
                 len_page = "".join(char for char in substring_before if char.isdigit())
 
-            print("REVIEWS:---"+len_page)
             return int(len_page)
 
-        len_page = get_len_page()
+        len_page = get_len_page(len_page)
         html_datas = reviewsHtml(reviews_url, math.floor(len_page / 10))
         reviews = []
 
