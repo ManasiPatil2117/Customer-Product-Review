@@ -78,11 +78,7 @@ def reviewsHtml(url, page_no):
 	return soup
 
 def getReviews(html_data):
-	print("-"*50)
 	print(type(html_data))
-	# soup = BeautifulSoup(html_data, "html.parser")
-	# html_data = BeautifulSoup(html_data, "html5lib")
-	# html_data = BeautifulSoup(html_data, "lxml")
 
 	data_dicts = []
 	boxes = html_data.select('div[data-hook="review"]')
@@ -163,23 +159,19 @@ def my_form_post():
 		html_datas = []
 
 		with concurrent.futures.ThreadPoolExecutor(10) as executor:
-			future_complete = [executor.submit(reviewsHtml, reviews_url, page_no) for page_no in range(1, 10)]
+			future_complete = [executor.submit(reviewsHtml, reviews_url, page_no) for page_no in range(1, 11)]
 			
-			print("-"*20)
+			concurrent.futures.wait(future_complete, timeout=None, return_when=concurrent.futures.ALL_COMPLETED)
 			for future in concurrent.futures.as_completed(future_complete):
 				data = future.result()
 				html_datas.append(data)
-				print("-"*20)
 				print(type(data))
-		
-		# print(html_datas[0])
 	
 		reviews = []
 
 		for html_data in html_datas:
 			review = getReviews(html_data)
 			reviews += review
-			print("-"*100)
 
 		# return ": )"
 
@@ -254,23 +246,20 @@ def my_form_post():
 		snegative = percentage(snegative, NoOfTerms)
 		neutral = percentage(neutral, NoOfTerms)
 
-		if polarity == 0:
-			print("Neutral")
-		elif polarity > 0 and polarity <= 0.3:
-			print("Weakly Positive")
-		elif polarity > 0.3 and polarity <= 0.6:
-			print("Positive")
-		elif polarity > 0.6 and polarity <= 1:
-			print("Strongly Positive")
-		elif polarity > -0.3 and polarity <= 0:
-			print("Weakly Negative")
-		elif polarity > -0.6 and polarity <= -0.3:
-			print("Negative")
-		elif polarity > -1 and polarity <= -0.6:
-			print("Strongly Negative")
-
-		print()
-		print("-"*30)
+		# if polarity == 0:
+		# 	print("Neutral")
+		# elif polarity > 0 and polarity <= 0.3:
+		# 	print("Weakly Positive")
+		# elif polarity > 0.3 and polarity <= 0.6:
+		# 	print("Positive")
+		# elif polarity > 0.6 and polarity <= 1:
+		# 	print("Strongly Positive")
+		# elif polarity > -0.3 and polarity <= 0:
+		# 	print("Weakly Negative")
+		# elif polarity > -0.6 and polarity <= -0.3:
+		# 	print("Negative")
+		# elif polarity > -1 and polarity <= -0.6:
+		# 	print("Strongly Negative")
 
 		return render_template(
 			"result.html",
