@@ -118,16 +118,7 @@ def my_form_post():
             print("REVIEWS:---"+len_page)
             return int(len_page)
 
-<<<<<<< HEAD
         len_page = get_len_page()
-=======
-        ret_val = get_len_page(len_page)
-
-        if isinstance(ret_val, str):
-            return render_template("error.html", error=ret_val)
-
-        len_page = ret_val
->>>>>>> 8e2458c4410a01149d6db8d951a5618c5321db07
         html_datas = reviewsHtml(reviews_url, math.floor(len_page / 10))
         reviews = []
 
