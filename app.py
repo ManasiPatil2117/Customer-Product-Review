@@ -162,7 +162,11 @@ def my_form_post():
 			future_complete = [executor.submit(reviewsHtml, reviews_url, page_no) for page_no in range(1, 11)]
 			
 			concurrent.futures.wait(future_complete, timeout=None, return_when=concurrent.futures.ALL_COMPLETED)
+			count = 1
 			for future in concurrent.futures.as_completed(future_complete):
+				print(count)
+				count += 1
+
 				data = future.result()
 				html_datas.append(data)
 				print(type(data))
@@ -265,10 +269,10 @@ def my_form_post():
 			"result.html",
 			positive=positive,
 			negative=negative,
-			wpositive=wpositive,
+			wpositive=0,
 			neutral=neutral,
 			spositive=spositive,
-			wnegative=wnegative,
+			wnegative=wpositive,
 			snegative=snegative,
 		)
 
