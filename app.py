@@ -10,6 +10,8 @@ import string
 import math
 import concurrent.futures
 from concurrent.futures import ProcessPoolExecutor
+from modelScaffold import SentimentNet
+import torch
 
 headers = {
 	"authority": "www.amazon.com",
@@ -175,9 +177,17 @@ def my_form_post():
 
 		for html_data in html_datas:
 			review = getReviews(html_data)
+			print(review)
 			reviews += review
 
 		# return ": )"
+		vocab_size = 221523
+		output_size = 1
+		embedding_dim = 400
+		hidden_dim = 512
+		n_layers = 2
+		model = SentimentNet(vocab_size, output_size, embedding_dim, hidden_dim, n_layers)
+		model.load_state_dict(torch.load('./model/state_dict.pt'))
 
 		df_reviews = pd.DataFrame(reviews)
 		df = pd.DataFrame(reviews)
@@ -265,11 +275,12 @@ def my_form_post():
 		# elif polarity > -1 and polarity <= -0.6:
 		# 	print("Strongly Negative")
 
+		wpositive = str(float(positive) / 2)
 		return render_template(
 			"result.html",
 			positive=positive,
 			negative=negative,
-			wpositive=0,
+			wpositive=wpositive,
 			neutral=neutral,
 			spositive=spositive,
 			wnegative=wpositive,
